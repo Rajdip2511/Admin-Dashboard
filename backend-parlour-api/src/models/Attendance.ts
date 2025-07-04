@@ -1,22 +1,21 @@
-import { Schema, model } from 'mongoose';
-import { IAttendance, IAttendanceModel } from '../types';
+import { Schema, model, Document } from 'mongoose';
 
-const attendanceSchema = new Schema<IAttendance>({
-  employee: { type: Schema.Types.ObjectId, ref: 'Employee', required: true },
-  punchInTime: { type: Date, required: true },
-  punchOutTime: { type: Date },
-}, { timestamps: true });
+export interface IAttendance extends Document {
+  employee: Schema.Types.ObjectId;
+  date: Date;
+  punchIn: Date;
+  punchOut?: Date;
+}
 
-attendanceSchema.statics.findTodaysAttendance = function () {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
+const AttendanceSchema = new Schema<IAttendance>({
+  employee: { type: Schema.Types.ObjectId, ref: 'Employee', required: true, index: true },
+  date: { type: Date, required: true, index: true },
+  punchIn: { type: Date, required: true },
+  punchOut: { type: Date },
+}, {
+  timestamps: true,
+});
 
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+AttendanceSchema.index({ employee: 1, date: 1 }, { unique: true });
 
-  return this.find({ punchInTime: { $gte: start, $lt: end } });
-};
-
-const Attendance = model<IAttendance, IAttendanceModel>('Attendance', attendanceSchema);
-
-export default Attendance; 
+export default model<IAttendance>('Attendance', AttendanceSchema); 

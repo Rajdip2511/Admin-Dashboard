@@ -1,48 +1,39 @@
-import { Schema, model } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import { Schema, model, Document } from 'mongoose';
 import jwt from 'jsonwebtoken';
-import { IUser, UserRole } from '../types';
+import bcrypt from 'bcryptjs';
+import { UserRole } from '../types';
 
-const userSchema = new Schema<IUser>({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 6,
-    select: false,
-  },
-  firstName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  lastName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
+export interface IUserMethods {
+  generateAuthToken(): string;
+  comparePassword(password: string): Promise<boolean>;
+}
+
+export type UserDocument = Document & {
+  email: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+} & IUserMethods;
+
+const UserSchema = new Schema<UserDocument, {}, IUserMethods>({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true, select: false },
+  firstName: { type: String },
+  lastName: { type: String },
   role: {
     type: String,
     enum: Object.values(UserRole),
     default: UserRole.ADMIN,
   },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-  lastLogin: {
-    type: Date,
-  },
-}, { timestamps: true });
+}, {
+  timestamps: true,
+});
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
@@ -50,20 +41,25 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.methods.comparePassword = async function (enteredPassword: string) {
-  return await bcrypt.compare(enteredPassword, this.password);
+UserSchema.methods.generateAuthToken = function (): string {
+  const payload = {
+    user: {
+      id: this._id,
+      role: this.role,
+    },
+  };
+  return jwt.sign(
+    payload,
+    process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-parlour-dashboard-2024',
+    { expiresIn: '1h' }
+  );
 };
 
-userSchema.methods.generateAuthToken = function () {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined');
+UserSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
+  if (!this.password) {
+    return false;
   }
-  return jwt.sign({ id: this._id, role: this.role }, secret, {
-    expiresIn: '7d',
-  });
+  return bcrypt.compare(password, this.password);
 };
 
-const User = model<IUser>('User', userSchema);
-
-export default User; 
+export default model<UserDocument>('User', UserSchema); 

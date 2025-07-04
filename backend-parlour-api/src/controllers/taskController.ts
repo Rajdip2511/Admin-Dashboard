@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import Task from '../models/Task';
-import { IAuthRequest } from '../middleware/auth';
+import { AuthRequest } from '../middleware/auth';
 
-export const getTasks = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const getTasks = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const tasks = await Task.find().populate('assignedTo', 'firstName lastName');
     res.json(tasks);
@@ -13,7 +13,7 @@ export const getTasks = async (req: IAuthRequest, res: Response, next: NextFunct
   }
 };
 
-export const getTask = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const getTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const task = await Task.findById(req.params.id).populate('assignedTo', 'firstName lastName');
     if (!task) {
@@ -26,7 +26,7 @@ export const getTask = async (req: IAuthRequest, res: Response, next: NextFuncti
   }
 };
 
-export const createTask = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const createTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -41,7 +41,7 @@ export const createTask = async (req: IAuthRequest, res: Response, next: NextFun
       assignedTo,
       dueDate,
       priority,
-      assignedBy: req.user?._id,
+      assignedBy: req.user?.id,
     });
 
     const task = await newTask.save();
@@ -52,7 +52,7 @@ export const createTask = async (req: IAuthRequest, res: Response, next: NextFun
   }
 };
 
-export const updateTask = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const updateTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -74,7 +74,7 @@ export const updateTask = async (req: IAuthRequest, res: Response, next: NextFun
   }
 };
 
-export const deleteTask = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const deleteTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const task = await Task.findByIdAndRemove(req.params.id);
     if (!task) {

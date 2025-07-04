@@ -1,23 +1,42 @@
 import express, { Application, Request, Response } from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
+import SocketService from './services/socketService';
+import { Server } from 'socket.io';
+import employeeRoutes from './routes/employees';
+import taskRoutes from './routes/tasks';
+import authRoutes from './routes/auth';
+import attendanceRoutes from './routes/attendance';
+
+// Extend the Express Request type to include the io server
+export interface AppRequest extends Request {
+  io?: Server;
+}
 
 const app: Application = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-  },
-});
+
+// Initialize Socket.IO
+const socketService = new SocketService(server);
+const io = socketService.getIO();
 
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Make io accessible to our router
+app.use((req: AppRequest, res: Response, next) => {
+  req.io = io;
+  next();
+});
+
+app.use('/api/employees', employeeRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'UP' });

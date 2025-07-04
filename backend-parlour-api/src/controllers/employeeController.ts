@@ -1,9 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import Employee from '../models/Employee';
-import { IAuthRequest } from '../middleware/auth';
+import Attendance from '../models/Attendance';
+import { AuthRequest } from '../middleware/auth';
 
-export const getEmployees = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const getEmployeesWithStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const employees = await Employee.find();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const employeesWithStatus = await Promise.all(
+      employees.map(async (employee) => {
+        const attendance = await Attendance.findOne({
+          employee: employee._id,
+          date: today,
+        });
+        const status = attendance ? (attendance.punchOut ? 'Punched Out' : 'Punched In') : 'Punched Out';
+        return {
+          ...employee.toObject(),
+          status,
+        };
+      })
+    );
+
+    res.json(employeesWithStatus);
+  } catch (err) {
+    if (err instanceof Error) console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+export const getEmployees = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const employees = await Employee.find();
     res.json(employees);
@@ -13,7 +41,7 @@ export const getEmployees = async (req: IAuthRequest, res: Response, next: NextF
   }
 };
 
-export const getEmployee = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const getEmployee = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
@@ -26,7 +54,7 @@ export const getEmployee = async (req: IAuthRequest, res: Response, next: NextFu
   }
 };
 
-export const createEmployee = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const createEmployee = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -64,7 +92,7 @@ export const createEmployee = async (req: IAuthRequest, res: Response, next: Nex
   }
 };
 
-export const updateEmployee = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const updateEmployee = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -86,7 +114,7 @@ export const updateEmployee = async (req: IAuthRequest, res: Response, next: Nex
   }
 };
 
-export const deleteEmployee = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const deleteEmployee = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const employee = await Employee.findByIdAndRemove(req.params.id);
     if (!employee) {

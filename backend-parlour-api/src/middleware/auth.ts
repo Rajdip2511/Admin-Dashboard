@@ -1,13 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { IUser } from '../types';
+import { UserRole } from '../types';
+import { UserDocument } from '../models/User';
 
-export interface IAuthRequest extends Request {
-  user?: IUser;
+interface JwtPayload {
+  user: {
+    id: string;
+    role: UserRole;
+  };
 }
 
-export const authenticate = async (req: IAuthRequest, res: Response, next: NextFunction) => {
+export interface AuthRequest extends Request {
+  user?: UserDocument;
+}
+
+export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
@@ -15,25 +22,22 @@ export const authenticate = async (req: IAuthRequest, res: Response, next: NextF
   }
 
   try {
-    const secret = process.env.JWT_SECRET as string;
-    const decoded = jwt.verify(token, secret) as { id: string };
-    const user = await User.findById(decoded.id).select('-password');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-parlour-dashboard-2024'
+    ) as JwtPayload;
 
-    if (!user) {
-      return res.status(401).json({ msg: 'User not found' });
-    }
-
-    req.user = user;
+    req.user = decoded.user as UserDocument; // Attach decoded user payload
     next();
   } catch (err) {
     res.status(401).json({ msg: 'Token is not valid' });
   }
 };
 
-export const authorize = (...roles: string[]) => {
-  return (req: IAuthRequest, res: Response, next: NextFunction) => {
+export const authorize = (roles: UserRole[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ msg: 'Forbidden' });
+      return res.status(403).json({ msg: 'Access denied. You do not have the required role.' });
     }
     next();
   };

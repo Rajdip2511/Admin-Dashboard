@@ -1,20 +1,19 @@
 import { Document, Model } from 'mongoose';
 
 export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'Super Admin',
+  ADMIN = 'Admin',
 }
 
-export interface IUser extends Document {
+export interface IUser {
+  _id: string;
   email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
   role: UserRole;
-  isActive: boolean;
-  lastLogin?: Date;
-  comparePassword(password: string): Promise<boolean>;
-  generateAuthToken(): string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IEmployee extends Document {

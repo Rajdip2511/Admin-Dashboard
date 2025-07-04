@@ -8,9 +8,12 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  getEmployeesWithStatus,
 } from '../controllers/employeeController';
 
 const router = Router();
+
+router.get('/status', authenticate, getEmployeesWithStatus);
 
 router.get('/', authenticate, getEmployees);
 
@@ -20,7 +23,7 @@ router.post(
   '/',
   [
     authenticate,
-    authorize(UserRole.SUPER_ADMIN),
+    authorize([UserRole.SUPER_ADMIN]),
     body('firstName').notEmpty(),
     body('lastName').notEmpty(),
     body('email').isEmail(),
@@ -37,7 +40,7 @@ router.put(
   '/:id',
   [
     authenticate,
-    authorize(UserRole.SUPER_ADMIN),
+    authorize([UserRole.SUPER_ADMIN]),
     body('email').optional().isEmail(),
     body('salary').optional().isNumeric(),
   ],
@@ -47,7 +50,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  authorize(UserRole.SUPER_ADMIN),
+  authorize([UserRole.SUPER_ADMIN]),
   deleteEmployee
 );
 
