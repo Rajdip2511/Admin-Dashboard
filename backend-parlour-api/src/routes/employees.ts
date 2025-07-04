@@ -1,14 +1,54 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin } from '@/middleware/auth';
+import { body } from 'express-validator';
+import { authenticate, authorize } from '../middleware/auth';
+import { UserRole } from '../types';
+import {
+  getEmployees,
+  getEmployee,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee,
+} from '../controllers/employeeController';
 
 const router = Router();
 
-// All employee routes require authentication
-router.use(authenticate);
+router.get('/', authenticate, getEmployees);
 
-// Placeholder routes - to be implemented
-router.get('/', requireAdmin, (req, res) => {
-  res.json({ message: 'Employees route - to be implemented' });
-});
+router.get('/:id', authenticate, getEmployee);
+
+router.post(
+  '/',
+  [
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    body('firstName').notEmpty(),
+    body('lastName').notEmpty(),
+    body('email').isEmail(),
+    body('phone').notEmpty(),
+    body('position').notEmpty(),
+    body('department').notEmpty(),
+    body('hireDate').isISO8601(),
+    body('salary').isNumeric(),
+  ],
+  createEmployee
+);
+
+router.put(
+  '/:id',
+  [
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    body('email').optional().isEmail(),
+    body('salary').optional().isNumeric(),
+  ],
+  updateEmployee
+);
+
+router.delete(
+  '/:id',
+  authenticate,
+  authorize(UserRole.SUPER_ADMIN),
+  deleteEmployee
+);
 
 export default router; 

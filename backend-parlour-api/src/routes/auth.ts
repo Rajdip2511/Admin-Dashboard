@@ -1,35 +1,33 @@
 import { Router } from 'express';
-import {
-  register,
-  login,
-  getProfile,
-  updateProfile,
-  changePassword,
-  refreshToken,
-  logout,
-  validateRegister,
-  validateLogin,
-  validateUpdateProfile,
-  validateChangePassword
-} from '@/controllers/authController';
-import { authenticate, requireSuperAdmin } from '@/middleware/auth';
+import { register, login } from '../controllers/authController';
+import { body } from 'express-validator';
+import { authenticate, IAuthRequest } from '../middleware/auth';
+import { Response } from 'express';
 
 const router = Router();
 
-// Public routes
-router.post('/login', validateLogin, login);
-router.post('/logout', logout);
+router.post(
+  '/register',
+  [
+    body('email').isEmail(),
+    body('password').isLength({ min: 6 }),
+    body('firstName').not().isEmpty(),
+    body('lastName').not().isEmpty(),
+  ],
+  register
+);
 
-// Protected routes
-router.use(authenticate); // All routes below require authentication
+router.post(
+  '/login',
+  [
+    body('email').isEmail(),
+    body('password').not().isEmpty(),
+  ],
+  login
+);
 
-// Profile routes
-router.get('/profile', getProfile);
-router.put('/profile', validateUpdateProfile, updateProfile);
-router.post('/change-password', validateChangePassword, changePassword);
-router.post('/refresh-token', refreshToken);
-
-// Super Admin only routes
-router.post('/register', requireSuperAdmin, validateRegister, register);
+router.get('/me', authenticate, (req: IAuthRequest, res: Response) => {
+  res.json(req.user);
+});
 
 export default router; 
