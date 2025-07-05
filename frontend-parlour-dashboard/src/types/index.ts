@@ -1,137 +1,116 @@
 // User Types
 export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  ADMIN = 'ADMIN'
+  SUPER_ADMIN = 'Super Admin',
+  ADMIN = 'Admin',
 }
 
 export interface User {
-  _id: string
-  name: string
-  email: string
-  role: UserRole
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface LoginCredentials {
-  email: string
-  password: string
-}
-
-export interface RegisterData {
-  name: string
-  email: string
-  password: string
-  role: UserRole
-}
-
-export interface AuthResponse {
-  success: boolean
-  message: string
-  user?: User
-  token?: string
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Employee Types
 export interface Employee {
-  _id: string
-  employeeId: string
-  name: string
-  email: string
-  phone: string
-  position: string
-  department: string
-  hireDate: string
-  salary: number
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateEmployeeData {
-  name: string
-  email: string
-  phone: string
-  position: string
-  department: string
-  hireDate: string
-  salary: number
+  id: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  position: string;
+  department: string;
+  hireDate: string;
+  salary: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Task Types
 export enum TaskStatus {
-  TODO = 'TODO',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  PENDING = 'Pending',
+  IN_PROGRESS = 'In Progress',
+  COMPLETED = 'Completed',
 }
 
 export enum TaskPriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  URGENT = 'URGENT'
+  LOW = 'Low',
+  MEDIUM = 'Medium',
+  HIGH = 'High',
 }
 
 export interface Task {
-  _id: string
-  title: string
-  description: string
-  assignedTo: string
-  assignedBy: string
-  priority: TaskPriority
-  status: TaskStatus
-  dueDate: string
-  completedDate?: string
-  createdAt: string
-  updatedAt: string
-  employee?: Employee
-  assigner?: User
-}
-
-export interface CreateTaskData {
-  title: string
-  description: string
-  assignedTo: string
-  priority: TaskPriority
-  dueDate: string
+  id: string;
+  title: string;
+  description: string;
+  assignedTo: Employee;
+  assignedBy: User;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate: string;
+  completedDate?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Attendance Types
-export enum AttendanceStatus {
-  PRESENT = 'PRESENT',
-  ABSENT = 'ABSENT',
-  LATE = 'LATE',
-  HALF_DAY = 'HALF_DAY'
+export interface Attendance {
+  id: string;
+  employee: Employee;
+  date: string;
+  punchIn: string;
+  punchOut?: string;
 }
 
-export interface Attendance {
-  _id: string
-  employeeId: string
-  date: string
-  punchIn?: string
-  punchOut?: string
-  hoursWorked: number
-  status: AttendanceStatus
-  notes?: string
-  createdAt: string
-  updatedAt: string
-  employee?: Employee
+// Auth Types
+export interface LoginCredentials {
+  email: string;
+  password?: string;
+}
+
+// Data types for creating new entities
+export interface CreateEmployeeData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  position: string;
+  department: string;
+  hireDate: string;
+  salary: number;
+}
+
+export interface CreateTaskData {
+  title: string;
+  description:string;
+  assignedTo: string;
+  priority: TaskPriority;
+  dueDate: string;
 }
 
 export interface PunchData {
-  employeeId: string
-  type: 'in' | 'out'
-  notes?: string
+  employeeId: string;
+  action: 'punch-in' | 'punch-out';
+}
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
 }
 
 // API Response Types
 export interface ApiResponse<T = any> {
-  success: boolean
-  message: string
-  data?: T
-  error?: string
+  success: boolean;
+  data?: T;
+  message?: string;
 }
 
 export interface PaginatedResponse<T = any> {

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,46 +8,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react'
-import { apiService } from '@/lib/api'
-import { socketService } from '@/lib/socket'
+import { useAuth } from '@/context/AuthContext'
 import { LoginCredentials } from '@/types'
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: '',
-    password: '',
+    email: 'admin@parlour.com',
+    password: 'Admin@123',
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+  const { login, isLoading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setIsLoading(true)
-
-    try {
-      const response = await apiService.login(credentials)
-      
-      if (response.success && response.data) {
-        // Store user data and token
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        // Connect to socket
-        socketService.connect(response.data.user)
-        
-        // Redirect to dashboard
-        router.push('/dashboard')
-      } else {
-        setError(response.message || 'Login failed')
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login')
-    } finally {
-      setIsLoading(false)
-    }
+    await login(credentials)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +37,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gradient">
+            <CardTitle className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500">
               Welcome Back
             </CardTitle>
             <CardDescription>
