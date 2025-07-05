@@ -1,33 +1,39 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/authController';
 import { body } from 'express-validator';
-import { authenticate, IAuthRequest } from '../middleware/auth';
+import { login } from '../controllers/authController';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import { Response } from 'express';
+import seedDatabase from '../services/seedService';
 
 const router = Router();
 
-router.post(
-  '/register',
-  [
-    body('email').isEmail(),
-    body('password').isLength({ min: 6 }),
-    body('firstName').not().isEmpty(),
-    body('lastName').not().isEmpty(),
-  ],
-  register
-);
+// @route   POST api/auth/login
+// @desc    Authenticate user & get token
+// @access  Public
+router.post('/login', [
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Password is required').exists(),
+], login);
 
-router.post(
-  '/login',
-  [
-    body('email').isEmail(),
-    body('password').not().isEmpty(),
-  ],
-  login
-);
 
-router.get('/me', authenticate, (req: IAuthRequest, res: Response) => {
+// @route   GET api/auth/me
+// @desc    Get user data
+// @access  Private
+router.get('/me', authenticate, (req: AuthRequest, res: Response) => {
   res.json(req.user);
 });
+
+// @route   GET api/auth/seed
+// @desc    Seed the database
+// @access  Public (for development only)
+router.get('/seed', async (req, res) => {
+  const result = await seedDatabase();
+  if (result.success) {
+    res.status(200).json({ message: result.message });
+  } else {
+    res.status(500).json({ message: result.message });
+  }
+});
+
 
 export default router; 

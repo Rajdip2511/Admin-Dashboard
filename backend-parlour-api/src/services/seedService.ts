@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
+import { UserRole } from '../types';
+import connectDB from '../config/database';
 
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/parlour_dashboard';
-
-const seedUsers = async () => {
+const seedDatabase = async () => {
   try {
-    await mongoose.connect(MONGO_URI);
-    console.log('[DB] MongoDB connected for seeding...');
+    await connectDB();
+    console.log('[Seed] Database connected...');
 
     const existingSuperAdmin = await User.findOne({ email: 'admin@parlour.com' });
     const existingAdmin = await User.findOne({ email: 'manager@parlour.com' });
@@ -18,7 +18,9 @@ const seedUsers = async () => {
       const superAdmin = new User({
         email: 'admin@parlour.com',
         password: hashedPassword,
-        role: 'Super Admin',
+        role: UserRole.SUPER_ADMIN,
+        firstName: 'Super',
+        lastName: 'Admin'
       });
       await superAdmin.save();
       console.log('[Seed] Super Admin created.');
@@ -32,19 +34,25 @@ const seedUsers = async () => {
       const admin = new User({
         email: 'manager@parlour.com',
         password: hashedPassword,
-        role: 'Admin',
+        role: UserRole.ADMIN,
+        firstName: 'Site',
+        lastName: 'Manager'
       });
       await admin.save();
       console.log('[Seed] Admin created.');
     } else {
       console.log('[Seed] Admin already exists.');
     }
+    return { success: true, message: 'Database seeded successfully.' };
   } catch (error) {
     console.error('[Seed] Error seeding users:', error);
+    return { success: false, message: 'Error seeding database.' };
   } finally {
-    await mongoose.disconnect();
-    console.log('[DB] MongoDB disconnected after seeding.');
+    mongoose.disconnect();
+    console.log('[Seed] Database disconnected.');
   }
 };
 
-seedUsers(); 
+seedDatabase();
+
+export default seedDatabase; 

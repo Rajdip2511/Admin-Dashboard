@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.5",
     "bcryptjs": "^3.0.2",
     "express-mongo-sanitize": "^2.2.0",
     "swagger-jsdoc": "^6.2.8",

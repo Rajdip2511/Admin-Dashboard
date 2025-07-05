@@ -51,14 +51,18 @@ export default function AttendancePage() {
       );
     };
     
-    socketService.connect({});
-    socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
+    socketService.connect(null); // Connect without a user
+    if (socketService.socket) {
+      socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
+    }
 
     return () => {
-      socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
+      if (socketService.socket) {
+        socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
+      }
       socketService.disconnect();
     };
-  }, []);
+  }, [socketService.socket]);
 
   const handlePunch = async (employeeId: string, currentStatus: string) => {
     const action = currentStatus === 'Punched In' ? 'punch-out' : 'punch-in';

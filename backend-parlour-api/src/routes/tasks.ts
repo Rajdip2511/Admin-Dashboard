@@ -20,7 +20,7 @@ router.post(
   '/',
   [
     authenticate,
-    authorize(UserRole.SUPER_ADMIN),
+    authorize([UserRole.SUPER_ADMIN]),
     body('title').notEmpty(),
     body('description').notEmpty(),
     body('assignedTo').notEmpty(),
@@ -33,7 +33,7 @@ router.put(
   '/:id',
   [
     authenticate,
-    authorize(UserRole.SUPER_ADMIN),
+    authorize([UserRole.SUPER_ADMIN]),
     body('status').optional(),
     body('priority').optional(),
   ],
@@ -43,7 +43,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  authorize(UserRole.SUPER_ADMIN),
+  authorize([UserRole.SUPER_ADMIN]),
   deleteTask
 );
 

@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model, Schema } from 'mongoose';
 
 export enum UserRole {
   SUPER_ADMIN = 'Super Admin',
@@ -16,19 +16,15 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export interface IEmployee extends Document {
+export type IEmployee = Document & {
   employeeId: string;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   position: string;
-  department: string;
-  hireDate: Date;
-  salary: number;
-  isActive: boolean;
-  profileImage?: string;
-}
+  user: Schema.Types.ObjectId;
+};
 
 export interface IEmployeeModel extends Model<IEmployee> {
   findActiveEmployees(): Promise<IEmployee[]>;
@@ -50,8 +46,8 @@ export enum TaskPriority {
 export interface ITask extends Document {
   title: string;
   description: string;
-  assignedTo: IEmployee['_id'];
-  assignedBy: IUser['_id'];
+  assignedTo: Schema.Types.ObjectId;
+  assignedBy: Schema.Types.ObjectId;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: Date;
@@ -63,9 +59,10 @@ export interface ITaskModel extends Model<ITask> {
 }
 
 export interface IAttendance extends Document {
-  employee: IEmployee['_id'];
+  employee: Schema.Types.ObjectId;
   punchInTime: Date;
   punchOutTime?: Date;
+  date: Date;
 }
 
 export interface IAttendanceModel extends Model<IAttendance> {

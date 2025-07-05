@@ -24,14 +24,13 @@ router.post(
   [
     authenticate,
     authorize([UserRole.SUPER_ADMIN]),
-    body('firstName').notEmpty(),
-    body('lastName').notEmpty(),
-    body('email').isEmail(),
-    body('phone').notEmpty(),
-    body('position').notEmpty(),
-    body('department').notEmpty(),
-    body('hireDate').isISO8601(),
-    body('salary').isNumeric(),
+    body('firstName', 'First name is required').notEmpty(),
+    body('lastName', 'Last name is required').notEmpty(),
+    body('email', 'A valid email is required').isEmail(),
+    body('phone', 'Phone number is required').notEmpty(),
+    body('position', 'Position is required').notEmpty(),
+    body('password', 'Password of at least 6 characters is required').isLength({ min: 6 }),
+    body('role', 'Role is required').isIn(Object.values(UserRole)),
   ],
   createEmployee
 );

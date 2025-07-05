@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { LoginCredentials, ApiResponse } from '@/types';
+import { LoginCredentials, ApiResponse, Employee } from '@/types';
+import { Task } from '@/types';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
@@ -59,6 +60,33 @@ export const apiService = {
     }
   },
 
+  createEmployee: async (employeeData: Partial<Employee>): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.post('/employees', employeeData);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  updateEmployee: async (employeeId: string, employeeData: Partial<Employee>): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.put(`/employees/${employeeId}`, employeeData);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  deleteEmployee: async (employeeId: string): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.delete(`/employees/${employeeId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
   punchInOut: async (data: { employeeId: string, action: string }): Promise<ApiResponse> => {
     try {
       const response = await apiClient.post('/attendance/punch', data);
@@ -72,6 +100,33 @@ export const apiService = {
   getTasks: async (): Promise<ApiResponse> => {
     try {
       const response = await apiClient.get('/tasks');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  createTask: async (taskData: Partial<Task>): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.post('/tasks', taskData);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  updateTask: async (taskId: string, taskData: Partial<Task>): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.put(`/tasks/${taskId}`, taskData);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  deleteTask: async (taskId: string): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.delete(`/tasks/${taskId}`);
       return { success: true, data: response.data };
     } catch (error: any) {
       return { success: false, message: error.response?.data?.msg || error.message };

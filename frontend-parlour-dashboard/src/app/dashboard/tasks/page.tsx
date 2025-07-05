@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import { apiService } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { Task } from '@/types';
+import { TaskForm } from '@/components/TaskForm';
+import { Button } from '@/components/ui/button';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -30,6 +34,49 @@ export default function TasksPage() {
     fetchTasks();
   }, []);
 
+  const handleSave = async (taskData: Partial<Task>) => {
+    try {
+      if (editingTask) {
+        // Update task
+        const response = await apiService.updateTask(editingTask.id, taskData);
+        if (response.success) {
+          setTasks(tasks.map(t => t.id === editingTask.id ? response.data : t));
+        } else {
+          setError(response.message || 'Failed to update task');
+        }
+      } else {
+        // Create new task
+        const response = await apiService.createTask(taskData);
+        if (response.success) {
+          setTasks([...tasks, response.data]);
+        } else {
+          setError(response.message || 'Failed to create task');
+        }
+      }
+      setIsFormOpen(false);
+      setEditingTask(null);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) {
+      return;
+    }
+
+    try {
+      const response = await apiService.deleteTask(taskId);
+      if (response.success) {
+        setTasks(tasks.filter((t) => t.id !== taskId));
+      } else {
+        setError(response.message || 'Failed to delete task');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    }
+  };
+
   if (isLoading) return <div>Loading tasks...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -37,9 +84,17 @@ export default function TasksPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Manage Tasks</h1>
       {user?.role === 'Super Admin' && (
-        <button className="mb-4 p-2 bg-blue-500 text-white rounded">
+        <Button className="mb-4" onClick={() => { setEditingTask(null); setIsFormOpen(true); }}>
           Add Task
-        </button>
+        </Button>
+      )}
+
+      {isFormOpen && (
+        <TaskForm 
+          task={editingTask}
+          onSave={handleSave}
+          onCancel={() => { setIsFormOpen(false); setEditingTask(null); }}
+        />
       )}
       
       <div className="overflow-x-auto">
@@ -63,8 +118,8 @@ export default function TasksPage() {
                 <td className="py-2 px-4 border-b">
                   {user?.role === 'Super Admin' && (
                     <div className="flex space-x-2">
-                      <button className="p-1 bg-yellow-500 text-white rounded text-sm">Edit</button>
-                      <button className="p-1 bg-red-500 text-white rounded text-sm">Delete</button>
+                      <Button variant="outline" size="sm" onClick={() => { setEditingTask(task); setIsFormOpen(true); }}>Edit</Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(task.id)}>Delete</Button>
                     </div>
                   )}
                 </td>

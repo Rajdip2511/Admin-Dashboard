@@ -40,12 +40,16 @@ export default function AttendanceDashboardPage() {
       );
     };
 
-    socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
+    if (socketService.socket) {
+      socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
+    }
 
     return () => {
-      socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
+      if (socketService.socket) {
+        socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
+      }
     };
-  }, []);
+  }, [socketService.socket]);
 
   if (isLoading) return <div>Loading attendance data...</div>;
   if (error) return <div>Error: {error}</div>;

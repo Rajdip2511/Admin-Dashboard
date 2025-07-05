@@ -34,13 +34,13 @@ export const punchInOut = async (req: AppRequest, res: Response, next: NextFunct
       attendance = new Attendance({
         employee: employeeId,
         date: today,
-        punchIn: new Date(),
+        punchInTime: new Date(),
       });
     } else if (action === 'punch-out') {
-      if (!attendance || attendance.punchOut) {
+      if (!attendance || attendance.punchOutTime) {
         return res.status(400).json({ msg: 'Not punched in or already punched out' });
       }
-      attendance.punchOut = new Date();
+      attendance.punchOutTime = new Date();
     } else {
       return res.status(400).json({ msg: 'Invalid action' });
     }
@@ -89,8 +89,8 @@ export const getEmployeeStatus = async (req: AppRequest, res: Response, next: Ne
       return res.json({ status: 'Punched Out' });
     }
 
-    const status = attendance.punchOut ? 'Punched Out' : 'Punched In';
-    res.json({ status, punchInTime: attendance.punchIn, punchOutTime: attendance.punchOut });
+    const status = attendance.punchOutTime ? 'Punched Out' : 'Punched In';
+    res.json({ status, punchInTime: attendance.punchInTime, punchOutTime: attendance.punchOutTime });
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     res.status(500).send('Server Error');

@@ -40,8 +40,7 @@ services:
       - CORS_ORIGIN=http://localhost:3000
       - JWT_SECRET=your-super-secret-jwt-key-for-parlour-dashboard-2024
     depends_on:
-      mongodb:
-        condition: service_healthy
+      - mongodb
     volumes:
       - ./backend-parlour-api:/app
       - /app/node_modules
@@ -62,11 +61,12 @@ services:
     dns:
       - 8.8.8.8
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     volumes:
       - ./frontend-parlour-dashboard:/app
       - /app/node_modules
+      - ./frontend-parlour-dashboard/package.json:/app/package.json
+      - ./frontend-parlour-dashboard/package-lock.json:/app/package-lock.json
 
 volumes:
   mongo-data: 

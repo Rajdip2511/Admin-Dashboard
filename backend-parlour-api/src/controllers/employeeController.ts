@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import Employee from '../models/Employee';
 import Attendance from '../models/Attendance';
+import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
+import { UserRole } from '../types';
 
 export const getEmployeesWithStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -14,9 +16,15 @@ export const getEmployeesWithStatus = async (req: AuthRequest, res: Response, ne
       employees.map(async (employee) => {
         const attendance = await Attendance.findOne({
           employee: employee._id,
-          date: today,
+          date: { $gte: today },
         });
-        const status = attendance ? (attendance.punchOut ? 'Punched Out' : 'Punched In') : 'Punched Out';
+        
+        const status = attendance
+          ? attendance.punchOutTime
+            ? 'Punched Out'
+            : 'Punched In'
+          : 'Not Punched In';
+
         return {
           ...employee.toObject(),
           status,
@@ -66,12 +74,25 @@ export const createEmployee = async (req: AuthRequest, res: Response, next: Next
     email,
     phone,
     position,
-    department,
-    hireDate,
-    salary,
+    password,
+    role,
   } = req.body;
 
   try {
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: 'A user with this email already exists.' });
+    }
+    
+    user = new User({
+      email,
+      password,
+      firstName,
+      lastName,
+      role: role || UserRole.ADMIN,
+    });
+    await user.save();
+
     const newEmployee = new Employee({
       employeeId: `EMP-${Date.now()}`,
       firstName,
@@ -79,13 +100,11 @@ export const createEmployee = async (req: AuthRequest, res: Response, next: Next
       email,
       phone,
       position,
-      department,
-      hireDate,
-      salary,
+      user: user._id,
     });
 
-    const employee = await newEmployee.save();
-    res.json(employee);
+    await newEmployee.save();
+    res.status(201).json(newEmployee);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     res.status(500).send('Server Error');
@@ -116,11 +135,15 @@ export const updateEmployee = async (req: AuthRequest, res: Response, next: Next
 
 export const deleteEmployee = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const employee = await Employee.findByIdAndRemove(req.params.id);
+    const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ msg: 'Employee not found' });
     }
-    res.json({ msg: 'Employee removed' });
+
+    await User.findByIdAndDelete(employee.user);
+    await Employee.findByIdAndDelete(req.params.id);
+
+    res.json({ msg: 'Employee and associated user removed' });
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     res.status(500).send('Server Error');
