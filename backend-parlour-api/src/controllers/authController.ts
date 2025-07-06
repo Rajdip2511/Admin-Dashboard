@@ -97,9 +97,11 @@ export const login = async (req: Request, res: Response) => {
       const jwt = require('jsonwebtoken');
       const token = jwt.sign(
         { 
-          id: testUser.id, 
-          email: testUser.email, 
-          role: testUser.role 
+          user: {
+            id: testUser.id, 
+            email: testUser.email, 
+            role: testUser.role 
+          }
         },
         process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-parlour-dashboard-2024',
         { expiresIn: '24h' }

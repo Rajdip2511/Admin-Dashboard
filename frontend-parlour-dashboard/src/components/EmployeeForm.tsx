@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { apiService } from '@/lib/api';
-import { Employee, UserRole } from '@/types';
+import { Employee, UserRole, CreateEmployeeData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ interface EmployeeFormProps {
 }
 
 export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProps) {
-  const { register, handleSubmit, reset, setValue, control } = useForm<Partial<Employee>>();
+  const { register, handleSubmit, reset, setValue, control } = useForm<Partial<Employee & CreateEmployeeData>>();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,15 +40,30 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
     }
   }, [employee, setValue, reset]);
 
-  const onSubmit = async (data: Partial<Employee>) => {
+  const onSubmit = async (data: Partial<Employee & CreateEmployeeData>) => {
     try {
+      setError(null);
+      console.log('Submitting employee data:', data);
+      
+      let response;
       if (employee) {
-        await apiService.updateEmployee(employee._id, data);
+        // For updates, exclude password field
+        const { password, ...updateData } = data;
+        response = await apiService.updateEmployee(employee._id, updateData);
       } else {
-        await apiService.createEmployee(data);
+        // For creation, include all fields
+        response = await apiService.createEmployee(data);
       }
-      onSuccess();
+      
+      console.log('API response:', response);
+      
+      if (response.success) {
+        onSuccess();
+      } else {
+        setError(response.message || 'Operation failed');
+      }
     } catch (err: any) {
+      console.error('Form submission error:', err);
       setError(err.message || 'An error occurred');
     }
   };

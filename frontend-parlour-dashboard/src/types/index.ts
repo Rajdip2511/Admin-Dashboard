@@ -32,6 +32,7 @@ export enum TaskStatus {
   PENDING = 'Pending',
   IN_PROGRESS = 'In Progress',
   COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled',
 }
 
 export enum TaskPriority {
@@ -76,9 +77,11 @@ export interface CreateEmployeeData {
   email: string;
   phone: string;
   position: string;
-  department: string;
-  hireDate: string;
-  salary: number;
+  department?: string;
+  hireDate?: string;
+  salary?: number;
+  password: string;
+  role: UserRole;
 }
 
 export interface CreateTaskData {

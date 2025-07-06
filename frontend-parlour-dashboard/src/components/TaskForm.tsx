@@ -58,13 +58,25 @@ export function TaskForm({ task, onSuccess, onCancel }: TaskFormProps) {
 
   const onSubmit = async (data: Partial<Task>) => {
     try {
+      setError(null);
+      console.log('Submitting task data:', data);
+      
+      let response;
       if (task) {
-        await apiService.updateTask(task._id, data);
+        response = await apiService.updateTask(task._id, data);
       } else {
-        await apiService.createTask(data);
+        response = await apiService.createTask(data);
       }
-      onSuccess();
+      
+      console.log('API response:', response);
+      
+      if (response.success) {
+        onSuccess();
+      } else {
+        setError(response.message || 'Operation failed');
+      }
     } catch (err: any) {
+      console.error('Form submission error:', err);
       setError(err.message || 'An error occurred');
     }
   };
@@ -93,7 +105,7 @@ export function TaskForm({ task, onSuccess, onCancel }: TaskFormProps) {
               name="assignedTo"
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value as string}>
+                <Select onValueChange={field.onChange} defaultValue={typeof field.value === 'string' ? field.value : (field.value as Employee)?._id}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an employee" />
                   </SelectTrigger>

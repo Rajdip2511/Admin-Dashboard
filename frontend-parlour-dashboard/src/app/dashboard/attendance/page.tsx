@@ -78,9 +78,12 @@ export default function AttendanceDashboardPage() {
                 <CardTitle>{employee.firstName} {employee.lastName}</CardTitle>
             </CardHeader>
             <CardContent>
-                <p>Status: <Badge className={
-                    employee.status === 'Punched In' ? 'bg-green-500' : 'bg-red-500'
-                }>{employee.status}</Badge></p>
+                <div className="flex items-center gap-2">
+                    <span>Status:</span>
+                    <Badge className={
+                        employee.status === 'Punched In' ? 'bg-green-500' : 'bg-red-500'
+                    }>{employee.status}</Badge>
+                </div>
             </CardContent>
           </Card>
         ))}
