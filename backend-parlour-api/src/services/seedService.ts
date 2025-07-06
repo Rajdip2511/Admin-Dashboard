@@ -7,7 +7,8 @@ import { UserRole, TaskStatus, TaskPriority } from '../types';
 
 const seedDatabase = async () => {
   try {
-    await connectDB();
+    // Don't call connectDB here since the server should already be connected
+    // await connectDB();
 
     // Clear existing data
     await Task.deleteMany({});
@@ -105,9 +106,11 @@ const seedDatabase = async () => {
   } catch (error) {
     console.error('Error seeding database:', error);
     return { success: false, message: 'Error seeding database' };
-  } finally {
-    mongoose.disconnect();
   }
+  // Don't disconnect - keep the server connection alive
+  // finally {
+  //   mongoose.disconnect();
+  // }
 };
 
 export default seedDatabase; 

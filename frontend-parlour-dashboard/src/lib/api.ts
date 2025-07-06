@@ -35,9 +35,11 @@ export const apiService = {
   login: async (credentials: LoginCredentials): Promise<ApiResponse> => {
     try {
       const response = await apiClient.post('/auth/login', credentials);
-      return { success: true, data: response.data, message: 'Login successful' };
+      return { success: true, data: response.data.data, message: response.data.message };
     } catch (error: any) {
-      return { success: false, message: error.response?.data?.msg || error.message };
+      console.error('Login error:', error);
+      const message = error.response?.data?.message || error.response?.data?.msg || error.message || 'Login failed';
+      return { success: false, message };
     }
   },
 
@@ -47,7 +49,8 @@ export const apiService = {
       const response = await apiClient.get('/employees');
       return { success: true, data: response.data };
     } catch (error: any) {
-      return { success: false, message: error.response?.data?.msg || error.message };
+      const message = error.response?.data?.message || error.response?.data?.msg || error.message || 'Failed to fetch employees';
+      return { success: false, message };
     }
   },
 
@@ -56,7 +59,8 @@ export const apiService = {
       const response = await apiClient.get('/employees/status');
       return { success: true, data: response.data };
     } catch (error: any) {
-      return { success: false, message: error.response?.data?.msg || error.message };
+      const message = error.response?.data?.message || error.response?.data?.msg || error.message || 'Failed to fetch employee status';
+      return { success: false, message };
     }
   },
 

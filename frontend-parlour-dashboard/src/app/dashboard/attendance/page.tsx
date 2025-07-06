@@ -59,8 +59,8 @@ export default function AttendanceDashboardPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Live Attendance</h1>
-        <Link href="/attendance" passHref>
-          <a className="text-blue-500 hover:underline">Go to Public Attendance Page</a>
+        <Link href="/attendance" className="text-blue-500 hover:underline">
+          Go to Public Attendance Page
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

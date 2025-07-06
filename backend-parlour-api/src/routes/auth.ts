@@ -24,6 +24,25 @@ router.get('/me', authenticate, (req: AuthRequest, res: Response) => {
   res.json(req.user);
 });
 
+// @route   GET api/auth/seed-initial
+// @desc    Seed the database (initial setup - public access)
+// @access  Public
+router.get('/seed-initial', async (req, res) => {
+  try {
+    const result = await seedDatabase();
+    if (result.success) {
+      res.status(200).json({ 
+        message: result.message,
+        note: 'Initial seed completed. Use superadmin@parlour.com / password123 to login.'
+      });
+    } else {
+      res.status(500).json({ message: result.message });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error during initial seed' });
+  }
+});
+
 // @route   GET api/auth/seed
 // @desc    Seed the database
 // @access  Private (Super Admin only)

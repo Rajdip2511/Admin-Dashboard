@@ -14,7 +14,7 @@ import { LoginCredentials } from '@/types'
 export default function LoginPage() {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: 'admin@parlour.com',
-    password: 'Admin@123',
+    password: 'password123',
   })
   const [showPassword, setShowPassword] = useState(false)
   const { login, isLoading, error } = useAuth();
@@ -119,10 +119,10 @@ export default function LoginPage() {
               <h3 className="font-semibold mb-2 text-sm">Demo Credentials:</h3>
               <div className="text-sm space-y-1">
                 <div>
-                  <strong>Super Admin:</strong> admin@parlour.com / Admin@123
+                  <strong>Super Admin:</strong> superadmin@parlour.com / password123
                 </div>
                 <div>
-                  <strong>Manager:</strong> manager@parlour.com / Manager@123
+                  <strong>Admin:</strong> admin@parlour.com / password123
                 </div>
               </div>
             </div>

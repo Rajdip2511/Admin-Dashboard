@@ -80,30 +80,30 @@ export default function HomePage() {
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-center">Admin Access</CardTitle>
+              <CardTitle className="text-center">Super Admin Access</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Default Super Admin Credentials
+                Full Admin Access
               </p>
               <div className="space-y-2 text-sm">
-                <div>Email: admin@parlour.com</div>
-                <div>Password: Admin@123</div>
+                <div>Email: superadmin@parlour.com</div>
+                <div>Password: password123</div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-center">Manager Access</CardTitle>
+              <CardTitle className="text-center">Admin Access</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Default Admin Credentials
+                Limited Admin Access
               </p>
               <div className="space-y-2 text-sm">
-                <div>Email: manager@parlour.com</div>
-                <div>Password: Manager@123</div>
+                <div>Email: admin@parlour.com</div>
+                <div>Password: password123</div>
               </div>
             </CardContent>
           </Card>

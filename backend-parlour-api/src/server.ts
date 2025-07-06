@@ -40,6 +40,17 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Debug endpoint for testing
+app.post('/api/debug/login', (req, res) => {
+  console.log('Debug login request:', req.body);
+  res.json({
+    success: true,
+    message: 'Debug endpoint working',
+    receivedData: req.body,
+    headers: req.headers
+  });
+});
+
 
 const PORT = process.env.PORT || 5000;
 

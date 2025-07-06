@@ -26,11 +26,9 @@ function DashboardLayout({ children }: { children: ReactNode }) {
           <ul>
             {navLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href}>
-                  <a className="flex items-center p-2 rounded-md hover:bg-gray-700">
-                    <link.icon className="mr-3 h-5 w-5" />
-                    {link.label}
-                  </a>
+                <Link href={link.href} className="flex items-center p-2 rounded-md hover:bg-gray-700">
+                  <link.icon className="mr-3 h-5 w-5" />
+                  {link.label}
                 </Link>
               </li>
             ))}
