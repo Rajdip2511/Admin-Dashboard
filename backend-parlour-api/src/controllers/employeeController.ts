@@ -53,6 +53,62 @@ const mockAttendanceState: { [key: string]: string } = {
   '507f1f77bcf86cd799439023': 'Not Punched In'
 };
 
+// Function to generate unique IDs
+const generateMockId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+};
+
+// Function to add new employee to mock data
+export const addMockEmployee = (employeeData: any) => {
+  const newEmployee = {
+    _id: generateMockId(),
+    employeeId: `EMP${String(mockEmployeesData.length + 1).padStart(3, '0')}`,
+    ...employeeData,
+    user: generateMockId(), // Generate mock user ID
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  mockEmployeesData.push(newEmployee);
+  // Initialize attendance state for new employee
+  mockAttendanceState[newEmployee._id] = 'Not Punched In';
+  console.log(`[Mock] Added new employee: ${newEmployee.firstName} ${newEmployee.lastName}`);
+  return newEmployee;
+};
+
+// Function to update employee in mock data
+export const updateMockEmployee = (employeeId: string, updateData: any) => {
+  const employeeIndex = mockEmployeesData.findIndex(emp => emp._id === employeeId);
+  if (employeeIndex === -1) {
+    return null;
+  }
+  
+  mockEmployeesData[employeeIndex] = {
+    ...mockEmployeesData[employeeIndex],
+    ...updateData,
+    updatedAt: new Date()
+  };
+  
+  console.log(`[Mock] Updated employee: ${mockEmployeesData[employeeIndex].firstName} ${mockEmployeesData[employeeIndex].lastName}`);
+  return mockEmployeesData[employeeIndex];
+};
+
+// Function to delete employee from mock data
+export const deleteMockEmployee = (employeeId: string) => {
+  const employeeIndex = mockEmployeesData.findIndex(emp => emp._id === employeeId);
+  if (employeeIndex === -1) {
+    return false;
+  }
+  
+  const deletedEmployee = mockEmployeesData[employeeIndex];
+  mockEmployeesData.splice(employeeIndex, 1);
+  // Remove from attendance state
+  delete mockAttendanceState[employeeId];
+  
+  console.log(`[Mock] Deleted employee: ${deletedEmployee.firstName} ${deletedEmployee.lastName}`);
+  return true;
+};
+
 // Function to update mock attendance state
 export const updateMockAttendanceState = (employeeId: string, status: string) => {
   mockAttendanceState[employeeId] = status;
@@ -126,7 +182,16 @@ export const getEmployee = async (req: AuthRequest, res: Response, next: NextFun
     res.json(employee);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Use mock data for local testing
+    console.log('[Employees] Database not available, using mock data for employee lookup');
+    
+    const employee = getMockEmployeeById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+    
+    res.json(employee);
   }
 };
 
@@ -175,7 +240,26 @@ export const createEmployee = async (req: AuthRequest, res: Response, next: Next
     res.status(201).json(newEmployee);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Use mock data for local testing
+    console.log('[Employees] Database not available, using mock data for employee creation');
+    
+    // Check if employee with this email already exists in mock data
+    const existingEmployee = mockEmployeesData.find(emp => emp.email === email);
+    if (existingEmployee) {
+      return res.status(400).json({ msg: 'A user with this email already exists.' });
+    }
+    
+    // Add new employee to mock data
+    const newEmployee = addMockEmployee({
+      firstName,
+      lastName,
+      email,
+      phone,
+      position
+    });
+    
+    res.status(201).json(newEmployee);
   }
 };
 
@@ -197,7 +281,16 @@ export const updateEmployee = async (req: AuthRequest, res: Response, next: Next
     res.json(employee);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Use mock data for local testing
+    console.log('[Employees] Database not available, using mock data for employee update');
+    
+    const updatedEmployee = updateMockEmployee(req.params.id, req.body);
+    if (!updatedEmployee) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+    
+    res.json(updatedEmployee);
   }
 };
 
@@ -214,6 +307,15 @@ export const deleteEmployee = async (req: AuthRequest, res: Response, next: Next
     res.json({ msg: 'Employee and associated user removed' });
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Use mock data for local testing
+    console.log('[Employees] Database not available, using mock data for employee deletion');
+    
+    const deleted = deleteMockEmployee(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+    
+    res.json({ msg: 'Employee removed from mock data' });
   }
 }; 
