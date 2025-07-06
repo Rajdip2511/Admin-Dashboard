@@ -6,6 +6,64 @@ import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import { UserRole } from '../types';
 
+// Dynamic mock data store for local testing
+const mockEmployeesData = [
+  {
+    _id: '507f1f77bcf86cd799439021',
+    employeeId: 'EMP001',
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@parlour.com',
+    phone: '123-456-7890',
+    position: 'Senior Stylist',
+    user: '507f1f77bcf86cd799439011',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    _id: '507f1f77bcf86cd799439022',
+    employeeId: 'EMP002',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jane.smith@parlour.com',
+    phone: '098-765-4321',
+    position: 'Hair Colorist',
+    user: '507f1f77bcf86cd799439012',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    _id: '507f1f77bcf86cd799439023',
+    employeeId: 'EMP003',
+    firstName: 'Mike',
+    lastName: 'Wilson',
+    email: 'mike.wilson@parlour.com',
+    phone: '555-123-4567',
+    position: 'Nail Technician',
+    user: '507f1f77bcf86cd799439013',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+// Dynamic attendance state for mock data
+const mockAttendanceState: { [key: string]: string } = {
+  '507f1f77bcf86cd799439021': 'Punched In',
+  '507f1f77bcf86cd799439022': 'Punched Out',
+  '507f1f77bcf86cd799439023': 'Not Punched In'
+};
+
+// Function to update mock attendance state
+export const updateMockAttendanceState = (employeeId: string, status: string) => {
+  mockAttendanceState[employeeId] = status;
+  console.log(`[Mock] Updated ${employeeId} status to: ${status}`);
+};
+
+// Function to get mock employee by ID
+export const getMockEmployeeById = (employeeId: string) => {
+  return mockEmployeesData.find(emp => emp._id === employeeId);
+};
+
 export const getEmployeesWithStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const employees = await Employee.find();
@@ -36,49 +94,12 @@ export const getEmployeesWithStatus = async (req: AuthRequest, res: Response, ne
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     
-    // Fallback mock data for local testing
-    console.log('[Employees] Database not available, using mock employees with status');
-    const mockEmployeesWithStatus = [
-      {
-        _id: '507f1f77bcf86cd799439021',
-        employeeId: 'EMP001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@parlour.com',
-        phone: '123-456-7890',
-        position: 'Senior Stylist',
-        user: '507f1f77bcf86cd799439011',
-        status: 'Punched In',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        _id: '507f1f77bcf86cd799439022',
-        employeeId: 'EMP002',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@parlour.com',
-        phone: '098-765-4321',
-        position: 'Hair Colorist',
-        user: '507f1f77bcf86cd799439012',
-        status: 'Punched Out',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        _id: '507f1f77bcf86cd799439023',
-        employeeId: 'EMP003',
-        firstName: 'Mike',
-        lastName: 'Wilson',
-        email: 'mike.wilson@parlour.com',
-        phone: '555-123-4567',
-        position: 'Nail Technician',
-        user: '507f1f77bcf86cd799439013',
-        status: 'Not Punched In',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+    // Use dynamic mock data for local testing
+    console.log('[Employees] Database not available, using dynamic mock employees with status');
+    const mockEmployeesWithStatus = mockEmployeesData.map(employee => ({
+      ...employee,
+      status: mockAttendanceState[employee._id] || 'Not Punched In'
+    }));
     res.json(mockEmployeesWithStatus);
   }
 };
@@ -90,47 +111,9 @@ export const getEmployees = async (req: AuthRequest, res: Response, next: NextFu
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     
-    // Fallback mock data for local testing
-    console.log('[Employees] Database not available, using mock data');
-    const mockEmployees = [
-      {
-        _id: '507f1f77bcf86cd799439021',
-        employeeId: 'EMP001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@parlour.com',
-        phone: '123-456-7890',
-        position: 'Senior Stylist',
-        user: '507f1f77bcf86cd799439011',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        _id: '507f1f77bcf86cd799439022',
-        employeeId: 'EMP002',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@parlour.com',
-        phone: '098-765-4321',
-        position: 'Hair Colorist',
-        user: '507f1f77bcf86cd799439012',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        _id: '507f1f77bcf86cd799439023',
-        employeeId: 'EMP003',
-        firstName: 'Mike',
-        lastName: 'Wilson',
-        email: 'mike.wilson@parlour.com',
-        phone: '555-123-4567',
-        position: 'Nail Technician',
-        user: '507f1f77bcf86cd799439013',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    res.json(mockEmployees);
+    // Use dynamic mock data for local testing
+    console.log('[Employees] Database not available, using dynamic mock data');
+    res.json(mockEmployeesData);
   }
 };
 

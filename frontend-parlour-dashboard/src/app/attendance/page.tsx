@@ -36,12 +36,18 @@ export default function AttendancePage() {
     fetchInitialData();
     socketService.connect({});
 
-    const handleAttendanceUpdate = (data: { employeeId: string; status: string }) => {
+    const handleAttendanceUpdate = (data: { employeeId: string; status: string; employeeName?: string; timestamp?: string }) => {
+      console.log(`[WebSocket] Attendance update received:`, data);
       setEmployees((prevEmployees) =>
         prevEmployees.map((emp) =>
           emp._id === data.employeeId ? { ...emp, status: data.status } : emp
         )
       );
+      
+      // Show a notification about the update
+      if (data.employeeName) {
+        console.log(`[Real-time] ${data.employeeName} status changed to: ${data.status}`);
+      }
     };
 
     socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
@@ -54,11 +60,16 @@ export default function AttendancePage() {
 
   const handlePunch = async (employeeId: string, status: string) => {
     const action = status === 'Punched In' ? 'punch-out' : 'punch-in';
+    const employee = employees.find(emp => emp._id === employeeId);
+    console.log(`[Punch] ${employee?.firstName} ${employee?.lastName} attempting to ${action}`);
+    
     try {
         if(action === 'punch-in') {
             await apiService.punchIn(employeeId);
+            console.log(`[Punch] ${employee?.firstName} ${employee?.lastName} successfully punched in`);
         } else {
             await apiService.punchOut(employeeId);
+            console.log(`[Punch] ${employee?.firstName} ${employee?.lastName} successfully punched out`);
         }
     } catch (error) {
         console.error('Failed to punch in/out', error);

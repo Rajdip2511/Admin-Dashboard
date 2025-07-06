@@ -36,12 +36,18 @@ export default function AttendanceDashboardPage() {
     fetchInitialData();
     socketService.connect({});
 
-    const handleAttendanceUpdate = (data: { employeeId: string; status: string }) => {
+    const handleAttendanceUpdate = (data: { employeeId: string; status: string; employeeName?: string; timestamp?: string }) => {
+      console.log(`[WebSocket] Live attendance update received:`, data);
       setEmployees((prevEmployees) =>
         prevEmployees.map((emp) =>
           emp._id === data.employeeId ? { ...emp, status: data.status } : emp
         )
       );
+      
+      // Show a notification about the update
+      if (data.employeeName) {
+        console.log(`[Live Dashboard] ${data.employeeName} status changed to: ${data.status} at ${data.timestamp}`);
+      }
     };
 
     socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);

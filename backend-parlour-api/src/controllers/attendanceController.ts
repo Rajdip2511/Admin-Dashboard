@@ -4,6 +4,7 @@ import Attendance from '../models/Attendance';
 import Employee from '../models/Employee';
 import { AuthRequest } from '../middleware/auth';
 import { getIO } from '../services/socketService';
+import { updateMockAttendanceState, getMockEmployeeById } from './employeeController';
 
 export const punchIn = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
@@ -43,19 +44,32 @@ export const punchIn = async (req: AuthRequest, res: Response, next: NextFunctio
     getIO().emit('attendanceUpdate', {
       employeeId: employee._id,
       status: 'Punched In',
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      timestamp: new Date().toISOString()
     });
 
     res.status(201).json(attendance);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     
-    // Fallback for local testing
-    console.log('[Attendance] Database not available, using mock punch in');
+    // Use dynamic mock data for local testing
+    console.log('[Attendance] Database not available, using dynamic mock punch in');
+    
+    // Get mock employee data
+    const mockEmployee = getMockEmployeeById(employeeId);
+    if (!mockEmployee) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+
+    // Update the mock attendance state
+    updateMockAttendanceState(employeeId, 'Punched In');
     
     // Emit the WebSocket event for real-time updates
     getIO().emit('attendanceUpdate', {
       employeeId: employeeId,
       status: 'Punched In',
+      employeeName: `${mockEmployee.firstName} ${mockEmployee.lastName}`,
+      timestamp: new Date().toISOString()
     });
 
     res.status(201).json({
@@ -102,19 +116,32 @@ export const punchOut = async (req: AuthRequest, res: Response, next: NextFuncti
     getIO().emit('attendanceUpdate', {
       employeeId: employee._id,
       status: 'Punched Out',
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      timestamp: new Date().toISOString()
     });
 
     res.json(attendance);
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     
-    // Fallback for local testing
-    console.log('[Attendance] Database not available, using mock punch out');
+    // Use dynamic mock data for local testing
+    console.log('[Attendance] Database not available, using dynamic mock punch out');
+    
+    // Get mock employee data
+    const mockEmployee = getMockEmployeeById(employeeId);
+    if (!mockEmployee) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+
+    // Update the mock attendance state
+    updateMockAttendanceState(employeeId, 'Punched Out');
     
     // Emit the WebSocket event for real-time updates
     getIO().emit('attendanceUpdate', {
       employeeId: employeeId,
       status: 'Punched Out',
+      employeeName: `${mockEmployee.firstName} ${mockEmployee.lastName}`,
+      timestamp: new Date().toISOString()
     });
 
     res.json({
