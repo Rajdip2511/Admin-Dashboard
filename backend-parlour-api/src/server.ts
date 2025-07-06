@@ -37,7 +37,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+  res.json({ 
+    status: 'OK', 
+    message: 'Parlour Admin Dashboard Backend is running', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
 });
 
 // Debug endpoint for testing
