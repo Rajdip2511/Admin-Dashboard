@@ -1,16 +1,17 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import Attendance from '../models/Attendance';
 import Employee from '../models/Employee';
-import { AppRequest } from '../server';
+import { AuthRequest } from '../middleware/auth';
+import { getIO } from '../services/socketService';
 
-export const punchInOut = async (req: AppRequest, res: Response, next: NextFunction) => {
+export const punchIn = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { employeeId, action } = req.body; // action: 'punch-in' or 'punch-out'
+  const { employeeId } = req.body;
 
   try {
     const employee = await Employee.findById(employeeId);
@@ -21,40 +22,71 @@ export const punchInOut = async (req: AppRequest, res: Response, next: NextFunct
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let attendance = await Attendance.findOne({
+    const existingAttendance = await Attendance.findOne({
       employee: employeeId,
-      date: today,
+      date: { $gte: today },
+      punchOutTime: { $exists: false },
     });
 
-    if (action === 'punch-in') {
-      if (attendance) {
-        // Already punched in today
-        return res.status(400).json({ msg: 'Already punched in for the day' });
-      }
-      attendance = new Attendance({
-        employee: employeeId,
-        date: today,
-        punchInTime: new Date(),
-      });
-    } else if (action === 'punch-out') {
-      if (!attendance || attendance.punchOutTime) {
-        return res.status(400).json({ msg: 'Not punched in or already punched out' });
-      }
-      attendance.punchOutTime = new Date();
-    } else {
-      return res.status(400).json({ msg: 'Invalid action' });
+    if (existingAttendance) {
+      return res.status(400).json({ msg: 'Already punched in' });
     }
+
+    const attendance = new Attendance({
+      employee: employeeId,
+      punchInTime: new Date(),
+      date: new Date(),
+    });
 
     await attendance.save();
 
-    // Emit a WebSocket event to notify all clients
-    if (req.io) {
-      req.io.emit('attendanceUpdate', {
-        employeeId: employee._id,
-        status: action === 'punch-in' ? 'Punched In' : 'Punched Out',
-        timestamp: new Date(),
-      });
+    getIO().emit('attendanceUpdate', {
+      employeeId: employee._id,
+      status: 'Punched In',
+    });
+
+    res.status(201).json(attendance);
+  } catch (err) {
+    if (err instanceof Error) console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+export const punchOut = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { employeeId } = req.body;
+
+  try {
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ msg: 'Employee not found' });
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendance.findOneAndUpdate(
+      {
+        employee: employeeId,
+        date: { $gte: today },
+        punchOutTime: { $exists: false },
+      },
+      { punchOutTime: new Date() },
+      { new: true }
+    );
+
+    if (!attendance) {
+      return res.status(404).json({ msg: 'No active punch-in found for today' });
+    }
+
+    getIO().emit('attendanceUpdate', {
+      employeeId: employee._id,
+      status: 'Punched Out',
+    });
 
     res.json(attendance);
   } catch (err) {
@@ -63,7 +95,7 @@ export const punchInOut = async (req: AppRequest, res: Response, next: NextFunct
   }
 };
 
-export const getAttendance = async (req: AppRequest, res: Response, next: NextFunction) => {
+export const getAttendance = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const attendance = await Attendance.find()
       .populate('employee', 'firstName lastName')
@@ -75,7 +107,7 @@ export const getAttendance = async (req: AppRequest, res: Response, next: NextFu
   }
 };
 
-export const getEmployeeStatus = async (req: AppRequest, res: Response, next: NextFunction) => {
+export const getEmployeeStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

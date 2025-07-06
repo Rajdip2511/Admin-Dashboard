@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { login } from '../controllers/authController';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { Response } from 'express';
 import seedDatabase from '../services/seedService';
+import { UserRole } from '../types';
 
 const router = Router();
 
@@ -25,8 +26,8 @@ router.get('/me', authenticate, (req: AuthRequest, res: Response) => {
 
 // @route   GET api/auth/seed
 // @desc    Seed the database
-// @access  Public (for development only)
-router.get('/seed', async (req, res) => {
+// @access  Private (Super Admin only)
+router.get('/seed', authenticate, authorize([UserRole.SUPER_ADMIN]), async (req, res) => {
   const result = await seedDatabase();
   if (result.success) {
     res.status(200).json({ message: result.message });

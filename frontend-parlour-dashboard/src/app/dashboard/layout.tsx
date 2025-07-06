@@ -1,63 +1,54 @@
 'use client';
 
-import React from 'react';
+import { ReactNode } from 'react';
+import withAuth from '@/components/withAuth';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { UserRole } from '@/types';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Home, Users, Briefcase, Calendar, LogOut } from 'lucide-react';
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, logout } = useAuth();
-  const router = useRouter();
+function DashboardLayout({ children }: { children: ReactNode }) {
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div>Loading...</div>
-      </div>
-    );
-  }
+  const navLinks = [
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/dashboard/employees', label: 'Employees', icon: Users },
+    { href: '/dashboard/tasks', label: 'Tasks', icon: Briefcase },
+    { href: '/dashboard/attendance', label: 'Attendance', icon: Calendar },
+  ];
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <aside className="w-64 bg-white dark:bg-gray-800 shadow-md">
-        <div className="p-6">
-          <h1 className="text-xl font-bold">Parlour Dash</h1>
-        </div>
-        <nav className="mt-6">
-          <Link href="/dashboard/employees" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-200 dark:hover:bg-gray-700">
-            Employees
-          </Link>
-          <Link href="/dashboard/tasks" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-200 dark:hover:bg-gray-700">
-            Tasks
-          </Link>
-          <Link href="/dashboard/attendance" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-200 dark:hover:bg-gray-700">
-            Attendance
-          </Link>
+    <div className="flex min-h-screen">
+      <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+        <h1 className="text-2xl font-bold mb-8">Parlour</h1>
+        <nav className="flex-grow">
+          <ul>
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href}>
+                  <a className="flex items-center p-2 rounded-md hover:bg-gray-700">
+                    <link.icon className="mr-3 h-5 w-5" />
+                    {link.label}
+                  </a>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
-      </aside>
-      <main className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-md">
-          <div>
-            {/* Header content can go here */}
-          </div>
-          <div>
-            <span className="mr-4">Welcome, {user?.firstName || user?.email}</span>
-            <button onClick={logout} className="p-2 bg-red-500 text-white rounded">Logout</button>
-          </div>
-        </header>
-        <div className="p-6 overflow-auto">
-          {children}
+        <div>
+          <p>{user?.email}</p>
+          <Button onClick={logout} variant="ghost" className="w-full justify-start">
+            <LogOut className="mr-3 h-5 w-5" />
+            Logout
+          </Button>
         </div>
+      </aside>
+      <main className="flex-grow p-8 bg-gray-100 dark:bg-gray-900">
+        {children}
       </main>
     </div>
   );
-};
+}
 
-export default DashboardLayout; 
+export default withAuth(DashboardLayout); 

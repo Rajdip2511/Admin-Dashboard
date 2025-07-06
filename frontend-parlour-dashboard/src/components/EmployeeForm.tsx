@@ -1,121 +1,124 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Employee } from '@/types';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { apiService } from '@/lib/api';
+import { Employee, UserRole } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface EmployeeFormProps {
   employee?: Employee | null;
-  onSave: (employee: Partial<Employee>) => void;
+  onSuccess: () => void;
   onCancel: () => void;
 }
 
-export const EmployeeForm = ({ employee, onSave, onCancel }: EmployeeFormProps) => {
-  const [formData, setFormData] = useState<Partial<Employee>>({});
+export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProps) {
+  const { register, handleSubmit, reset, setValue, control } = useForm<Partial<Employee>>();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (employee) {
-      // Editing an existing employee
-      setFormData({
-        ...employee,
-        hireDate: employee.hireDate ? new Date(employee.hireDate).toISOString().split('T')[0] : '',
-      });
+      setValue('firstName', employee.firstName);
+      setValue('lastName', employee.lastName);
+      setValue('email', employee.email);
+      setValue('phone', employee.phone);
+      setValue('position', employee.position);
+      setValue('role', employee.role);
     } else {
-      // Adding a new employee, default values
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        position: '',
-        department: '',
-        salary: 0,
-        hireDate: new Date().toISOString().split('T')[0],
-      });
+      reset();
     }
-  }, [employee]);
+  }, [employee, setValue, reset]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
+  const onSubmit = async (data: Partial<Employee>) => {
+    try {
+      if (employee) {
+        await apiService.updateEmployee(employee._id, data);
+      } else {
+        await apiService.createEmployee(data);
+      }
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg">
+    <Card className="mb-8">
+      <form onSubmit={handleSubmit(onSubmit)}>
         <CardHeader>
           <CardTitle>{employee ? 'Edit Employee' : 'Add Employee'}</CardTitle>
+          <CardDescription>
+            {employee ? 'Update the details of the employee.' : 'Enter the details for the new employee.'}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" name="firstName" value={formData.firstName || ''} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" name="lastName" value={formData.lastName || ''} onChange={handleChange} required />
-              </div>
-            </div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input id="firstName" {...register('firstName', { required: true })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input id="lastName" {...register('lastName', { required: true })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...register('email', { required: true })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" {...register('phone')} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="position">Position</Label>
+            <Input id="position" {...register('position')} />
+          </div>
+          {!employee && (
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} required />
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" {...register('password', { required: !employee })} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" value={formData.phone || ''} onChange={handleChange} required />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input id="position" name="position" value={formData.position || ''} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input id="department" name="department" value={formData.department || ''} onChange={handleChange} required />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                <Label htmlFor="hireDate">Hire Date</Label>
-                <Input id="hireDate" name="hireDate" type="date" value={formData.hireDate || ''} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salary">Salary</Label>
-                <Input id="salary" name="salary" type="number" value={formData.salary || ''} onChange={handleChange} required />
-              </div>
-            </div>
-            
-            {!employee && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  {/* Note: This should be a select dropdown in a real app */}
-                  <Input id="role" name="role" placeholder="Super Admin or Admin" onChange={handleChange} required />
-                </div>
-              </>
-            )}
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-              <Button type="submit">Save</Button>
-            </div>
-          </form>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Controller
+              name="role"
+              control={control}
+              defaultValue={employee?.role || UserRole.ADMIN}
+              render={({ field }: { field: any }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={UserRole.SUPER_ADMIN}>Super Admin</SelectItem>
+                        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                    </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
         </CardContent>
-      </Card>
-    </div>
+        <CardFooter className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {employee ? 'Update' : 'Create'}
+          </Button>
+        </CardFooter>
+      </form>
+      {error && <p className="text-red-500 text-center p-4">{error}</p>}
+    </Card>
   );
-}; 
+} 

@@ -87,9 +87,18 @@ export const apiService = {
     }
   },
 
-  punchInOut: async (data: { employeeId: string, action: string }): Promise<ApiResponse> => {
+  punchIn: async (employeeId: string): Promise<ApiResponse> => {
     try {
-      const response = await apiClient.post('/attendance/punch', data);
+      const response = await apiClient.post('/attendance/punch-in', { employeeId });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.msg || error.message };
+    }
+  },
+
+  punchOut: async (employeeId: string): Promise<ApiResponse> => {
+    try {
+      const response = await apiClient.post('/attendance/punch-out', { employeeId });
       return { success: true, data: response.data };
     } catch (error: any) {
       return { success: false, message: error.response?.data?.msg || error.message };

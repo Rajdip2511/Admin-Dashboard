@@ -1,61 +1,48 @@
-import express, { Application, Request, Response } from 'express';
+import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
-import mongoose from 'mongoose';
-import SocketService from './services/socketService';
-import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+import connectDB from './config/database';
+import { initSocket } from './services/socketService';
+import authRoutes from './routes/auth';
 import employeeRoutes from './routes/employees';
 import taskRoutes from './routes/tasks';
-import authRoutes from './routes/auth';
 import attendanceRoutes from './routes/attendance';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
-// Extend the Express Request type to include the io server
-export interface AppRequest extends Request {
-  io?: Server;
-}
+dotenv.config();
 
-const app: Application = express();
+const app = express();
 const server = http.createServer(app);
 
 // Initialize Socket.IO
-const socketService = new SocketService(server);
-const io = socketService.getIO();
+initSocket(server);
 
-app.use(cors());
-app.use(helmet());
+// Connect Database
+connectDB();
+
+// Init Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
+app.use(helmet());
 
-// Make io accessible to our router
-app.use((req: AppRequest, res: Response, next) => {
-  req.io = io;
-  next();
-});
-
+// Define Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/tasks', taskRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'UP' });
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/parlour_dashboard';
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log('[DB] MongoDB Connected...');
-    server.listen(PORT, () => {
-      console.log(`[Server] API running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('[DB] Error:', err.message);
-    process.exit(1);
-  });
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 
 export default app; 

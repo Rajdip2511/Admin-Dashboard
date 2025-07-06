@@ -16,19 +16,15 @@ export interface User {
 
 // Employee Types
 export interface Employee {
-  id: string;
+  _id: string;
   employeeId: string;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   position: string;
-  department: string;
-  hireDate: string;
-  salary: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  user: string;
+  role?: UserRole;
 }
 
 // Task Types
@@ -45,7 +41,7 @@ export enum TaskPriority {
 }
 
 export interface Task {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   assignedTo: Employee;

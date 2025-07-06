@@ -54,19 +54,23 @@ services:
     build:
       context: ./frontend-parlour-dashboard
       dockerfile: Dockerfile
+      target: builder
     container_name: parlour-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"
     dns:
       - 8.8.8.8
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
     depends_on:
       - backend
     volumes:
       - ./frontend-parlour-dashboard:/app
       - /app/node_modules
-      - ./frontend-parlour-dashboard/package.json:/app/package.json
-      - ./frontend-parlour-dashboard/package-lock.json:/app/package-lock.json
+      - /app/.next
+    command: npm run dev
 
 volumes:
   mongo-data: 

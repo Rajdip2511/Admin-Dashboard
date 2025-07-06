@@ -6,9 +6,7 @@ import { socketService } from '@/lib/socket';
 import { Employee } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Loader2 } from 'lucide-react';
-import { formatTime } from '@/lib/utils';
-
+import { Badge } from '@/components/ui/badge';
 
 interface EmployeeWithStatus extends Employee {
   status: string;
@@ -18,12 +16,6 @@ export default function AttendancePage() {
   const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -42,63 +34,69 @@ export default function AttendancePage() {
     };
 
     fetchInitialData();
+    socketService.connect({});
 
     const handleAttendanceUpdate = (data: { employeeId: string; status: string }) => {
       setEmployees((prevEmployees) =>
         prevEmployees.map((emp) =>
-          emp.id === data.employeeId ? { ...emp, status: data.status } : emp
+          emp._id === data.employeeId ? { ...emp, status: data.status } : emp
         )
       );
     };
-    
-    socketService.connect(null); // Connect without a user
-    if (socketService.socket) {
-      socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
-    }
+
+    socketService.socket.on('attendanceUpdate', handleAttendanceUpdate);
 
     return () => {
-      if (socketService.socket) {
-        socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
-      }
+      socketService.socket.off('attendanceUpdate', handleAttendanceUpdate);
       socketService.disconnect();
     };
-  }, [socketService.socket]);
+  }, []);
 
-  const handlePunch = async (employeeId: string, currentStatus: string) => {
-    const action = currentStatus === 'Punched In' ? 'punch-out' : 'punch-in';
+  const handlePunch = async (employeeId: string, status: string) => {
+    const action = status === 'Punched In' ? 'punch-out' : 'punch-in';
     try {
-      await apiService.punchInOut({ employeeId, action });
-      // The WebSocket event will trigger the UI update
-    } catch (err: any) {
-      setError(err.message || `Failed to punch ${action}`);
+        if(action === 'punch-in') {
+            await apiService.punchIn(employeeId);
+        } else {
+            await apiService.punchOut(employeeId);
+        }
+    } catch (error) {
+        console.error('Failed to punch in/out', error);
+        setError('Failed to update attendance');
     }
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
+  if (isLoading) return <div className="text-center p-8">Loading employees...</div>;
+  if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold">Employee Punch Station</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2 mt-2">
-          <Clock className="h-5 w-5" /> {formatTime(currentTime)} - {currentTime.toDateString()}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold text-center mb-8">Parlour Front-Desk Attendance</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {employees.map((employee) => (
-          <Card key={employee.id} className="text-center">
+          <Card key={employee._id} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{employee.firstName} {employee.lastName}</CardTitle>
+              <CardTitle className="text-lg">{employee.firstName} {employee.lastName}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="mb-4">Status: <span className={`font-semibold ${employee.status === 'Punched In' ? 'text-green-500' : 'text-red-500'}`}>{employee.status}</span></p>
+            <CardContent className="flex-grow flex flex-col justify-between">
+              <div>
+                <Badge 
+                  className={
+                    employee.status === 'Punched In' 
+                    ? 'bg-green-500' 
+                    : employee.status === 'Punched Out'
+                    ? 'bg-yellow-500'
+                    : 'bg-red-500'
+                  }
+                >
+                  {employee.status}
+                </Badge>
+                <p className="text-sm text-gray-500 mt-2">{employee.position}</p>
+              </div>
               <Button
-                onClick={() => handlePunch(employee.id, employee.status)}
-                className={`w-full ${
-                  employee.status === 'Punched In'
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-green-500 hover:bg-green-600'
+                onClick={() => handlePunch(employee._id, employee.status)}
+                className={`mt-4 w-full ${
+                  employee.status === 'Punched In' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
                 {employee.status === 'Punched In' ? 'Punch Out' : 'Punch In'}
